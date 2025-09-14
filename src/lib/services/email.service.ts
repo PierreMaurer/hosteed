@@ -105,18 +105,16 @@ export async function SendMail(
   email: string,
   name: string,
   message: string,
-  isHtml: boolean = false
+  isHtml: boolean = false,
+  forceScend: boolean = false
 ) {
-  // Ignorer les emails de test en développement
-  if (process.env.NODE_ENV === 'development' && email.includes('@example.com')) {
-    console.log('📧 Email de test ignoré en développement:', email)
-    return { messageId: 'skipped-test-email', response: 'Test email skipped in development' }
+  // Check if email sending is disabled (except for forced sends like email verification)
+  if (!forceScend && process.env.NEXT_PUBLIC_SEND_MAIL !== 'true') {
+    console.log('EMAIL SKIPPED: NEXT_PUBLIC_SEND_MAIL is not true')
+    return NextResponse.json({ message: 'Email sending disabled', skipped: true })
   }
 
-  // Configuration adaptative selon le provider
-  const config = getOptimalConfig(email)
-  
-  const transportConfig = {
+  const transport = nodemailer.createTransport({
     host: 'ssl0.ovh.net',
     port: config.port,
     secure: config.secure,
@@ -191,8 +189,15 @@ export async function sendEmailFromTemplate(
   templateName: string,
   email: string,
   subject: string,
-  variables: Record<string, string>
+  variables: Record<string, string>,
+  forceScend: boolean = false
 ) {
+  // Check if email sending is disabled (except for forced sends like email verification)
+  if (!forceScend && process.env.NEXT_PUBLIC_SEND_MAIL !== 'true') {
+    console.log(`EMAIL TEMPLATE ${templateName} SKIPPED: NEXT_PUBLIC_SEND_MAIL is not true`)
+    return { success: true, message: 'Email sending disabled', skipped: true }
+  }
+
   try {
     console.log(`📧 Préparation email template ${templateName} vers ${email}`)
     
@@ -292,7 +297,8 @@ export async function sendEmailFromTemplate(
 export async function sendRoleUpdateNotification(
   userEmail: string,
   userName: string,
-  newRole: string
+  newRole: string,
+  forceScend: boolean = false
 ) {
   try {
     // Déterminer les informations du rôle
@@ -311,7 +317,8 @@ export async function sendRoleUpdateNotification(
       'role-updated',
       userEmail,
       `🔄 Mise à jour de votre rôle sur Hosteed`,
-      variables
+      variables,
+      forceScend
     )
 
     return result

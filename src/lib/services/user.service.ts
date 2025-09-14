@@ -197,24 +197,9 @@ export async function sendEmailVerification(userId: string) {
         emailToken: token,
       },
     })
-    console.log('User updated with token')
-
-    // Fix potential double slash in URL
-    const baseUrl = process.env.NEXTAUTH_URL?.replace(/\/$/, '') || 'http://localhost:3000'
-    const verificationUrl = baseUrl + '/checkEmail/' + token
-    console.log('Verification URL:', verificationUrl)
-    console.log('About to send templated mail...')
-
-    await sendTemplatedMail(
-      user.email,
-      'Confirmez votre inscription sur Hosteed',
-      'checkEmail.html',
-      {
-        verificationUrl: verificationUrl,
-      }
-    )
-
-    console.log('=== EMAIL VERIFICATION SENT SUCCESSFULLY ===')
+    await sendTemplatedMail(user.email, 'Verifier votre email !', 'checkEmail.html', {
+      verificationUrl: process.env.NEXTAUTH_URL + '/checkEmail/' + token,
+    }, true)
   } catch (e) {
     console.error('=== ERROR IN EMAIL VERIFICATION ===')
     console.error('Error:', e)
@@ -285,7 +270,8 @@ export async function sendResetEmail(userEmail: string) {
       'resetPassword.html',
       {
         resetUrl: process.env.NEXTAUTH_URL + '/forgetPassword/' + token,
-      }
+      },
+      true
     )
   } catch (e) {
     console.error(e)
